@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"sync"
 	"syscall"
-	"time"
 )
 
 /*
@@ -47,13 +46,13 @@ func runSeed(c chan int, shutdown chan os.Signal, wg *sync.WaitGroup) {
 	r := rand.New(rand.NewSource(99))
 	for {
 		select {
-		case <-time.After(time.Millisecond * 100):
-			c <- r.Intn(11)
 		case <-shutdown:
 			close(c)
 			wg.Wait()
 			fmt.Println("Gracefull shutdown")
 			return
+		default:
+			c <- r.Intn(11)
 		}
 	}
 }
