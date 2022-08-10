@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"math/rand"
@@ -27,33 +28,36 @@ func main() {
 		panic("number of workers should be int")
 	}
 
+	// ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	// defer stop()
+
+	seedChannel := make(chan int)
+	ctx, cancel := context.WithCancel(context.Background())
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	seedChannel := make(chan int)
-
 	for i := 0; i < workersQty; i++ {
-		go runWorker(seedChannel, i)
+		go runWorker(ctx, seedChannel, i)
 	}
 
-	runSeed(seedChannel, shutdown)
-}
-
-func runSeed(c chan int, shutdown chan os.Signal) {
 	r := rand.New(rand.NewSource(99))
 	for {
 		select {
-		case <-shutdown:
-			close(c)
-			return
+		case <-ctx.Done():
+			cancel()
 		default:
-			c <- r.Intn(11)
+			seedChannel <- r.Intn(11)
 		}
 	}
 }
 
-func runWorker(c chan int, id int) {
-	for number := range c {
-		fmt.Printf("Worker[%d]: %d\n", id, number)
+func runWorker(ctx context.Context, c chan int, id int) {
+	for {
+		select {
+		case number := <-c:
+			fmt.Printf("Worker[%d]: %d\n", id, number)
+		case <-ctx.Done():
+			return
+		}
 	}
 }
