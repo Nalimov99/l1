@@ -8,7 +8,7 @@ func main() {
 	slice := []int{1, 2, 3, 4, 5}
 
 	fmt.Println("До: ", slice)
-	slice = removeIndex(slice, 4)
+	slice = removeIndex(slice, 1)
 	fmt.Println("После: ", slice)
 }
 
@@ -17,5 +17,7 @@ func removeIndex[T any](s []T, index int) []T {
 		return s
 	}
 
-	return append(s[:index], s[index+1:]...)
+	ret := make([]T, 0)
+	ret = append(ret, s[:index]...)
+	return append(ret, s[index+1:]...)
 }
